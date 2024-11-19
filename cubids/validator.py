@@ -72,7 +72,15 @@ def run_validator(call):
     ret = subprocess.run(call, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return ret
 
-
+def parse_issue(issue):
+    return {
+	"code": issue.get("code", ""),
+        "severity": issue.get("severity", ""),
+        "location": issue.get("location", ""),
+        "affects": ", ".join(issue.get("affects", [])),
+        "rule": issue.get("rule", "")
+    }   
+        
 def parse_validator_output(output):
     """Parse the JSON output of the BIDS validator into a pandas dataframe.
 
@@ -86,72 +94,34 @@ def parse_validator_output(output):
     df : :obj:`pandas.DataFrame`
         Dataframe of validator output.
     """
+    try:
+        data = json.loads(output)
 
-    def get_nested(dct, *keys):
-        """Get a nested value from a dictionary.
+        # Access 'issues' field from the outermost part of the structure
+        issues = data.get("issues", {})
 
-        Parameters
-        ----------
-        dct : :obj:`dict`
-            Dictionary to get value from.
-        keys : :obj:`list`
-            List of keys to get value from.
+        df = pd.DataFrame()
 
-        Returns
-        -------
-        :obj:`dict`
-            The nested value.
-        """
-        for key in keys:
-            try:
-                dct = dct[key]
-            except (KeyError, TypeError):
-                return None
-        return dct
+        # Actual issues (errors and warnings) are inside 'issues' -> 'issues'
+        issues_list = issues.get("issues", [])
 
-    data = json.loads(output)
+        # Iterate through list of issues
+        for issue in issues_list:
+            # If issue is an error
+            if issue.get("severity") == "error":
+                parsed = parse_issue(issue)
+                parsed_df = pd.DataFrame([parsed])
+                df = pd.concat([df, parsed_df], ignore_index=True)
+            # If issue is a warning
+            elif issue.get("severity") == "warning":
+                parsed = parse_issue(issue)
+                parsed_df = pd.DataFrame([parsed])
+                df = pd.concat([df, parsed_df], ignore_index=True)
 
-    issues = data["issues"]
+        return df
 
-    def parse_issue(issue_dict):
-        """Parse a single issue from the validator output.
-
-        Parameters
-        ----------
-        issue_dict : :obj:`dict`
-            Dictionary of issue.
-
-        Returns
-        -------
-        return_dict : :obj:`dict`
-            Dictionary of parsed issue.
-        """
-        return_dict = {}
-        return_dict["files"] = [
-            get_nested(x, "file", "relativePath") for x in issue_dict.get("files", "")
-        ]
-        return_dict["type"] = issue_dict.get("key", "")
-        return_dict["severity"] = issue_dict.get("severity", "")
-        return_dict["description"] = issue_dict.get("reason", "")
-        return_dict["code"] = issue_dict.get("code", "")
-        return_dict["url"] = issue_dict.get("helpUrl", "")
-
-        return return_dict
-
-    df = pd.DataFrame()
-
-    for warn in issues["warnings"]:
-        parsed = parse_issue(warn)
-        parsed = pd.DataFrame(parsed)
-        df = pd.concat([df, parsed], ignore_index=True)
-
-    for err in issues["errors"]:
-        parsed = parse_issue(err)
-        parsed = pd.DataFrame(parsed)
-        df = pd.concat([df, parsed], ignore_index=True)
-
-    return df
-
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}")
 
 def get_val_dictionary():
     """Get value dictionary.
