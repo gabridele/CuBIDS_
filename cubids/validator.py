@@ -16,7 +16,7 @@ def build_validator_call(path, ignore_headers=False):
     """Build a subprocess command to the bids validator."""
     # build docker call
     # CuBIDS automatically ignores subject consistency.
-    command = ["bids-validator", path, "--verbose", "--json", "--ignoreSubjectConsistency"]
+    command = ["bids-validator", path, "--verbose", "--json"]
 
     if ignore_headers:
         command.append("--ignoreNiftiHeaders")
