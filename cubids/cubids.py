@@ -853,7 +853,7 @@ class CuBIDS(object):
             self.reset_bids_layout()
 
         else:
-            print("Not running any association removals")
+            print("Not running any association removals. Make sure you'poviding relative paths")
 
     def get_nifti_associations(self, nifti):
         """Get nifti associations.
