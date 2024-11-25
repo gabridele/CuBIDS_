@@ -405,7 +405,7 @@ def _parse_copy_exemplars():
     )
     parser.add_argument(
         "exemplars_dir",
-        type=PathExists,
+        type=Path,
         action="store",
         help=(
             "absolute path to the root of a BIDS dataset "
