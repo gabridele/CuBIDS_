@@ -131,12 +131,10 @@ def get_val_dictionary():
     val_dict : dict
         Dictionary of values.
     """
-    val_dict = {}
-    val_dict["files"] = {"Description": "File with warning orerror"}
-    val_dict["type"] = {"Description": "BIDS validation warning or error"}
-    val_dict["severity"] = {"Description": "gravity of problem (warning/error"}
-    val_dict["description"] = {"Description": "Description of warning/error"}
-    val_dict["code"] = {"Description": "BIDS validator issue code number"}
-    val_dict["url"] = {"Description": "Link to the issue's neurostars thread"}
-
-    return val_dict
+    return {
+        "location": {"Description": "File with the validation issue."},
+        "code": {"Description": "Code of the validation issue."},
+        "subCode": {"Description": "Subcode providing additional issue details."},
+        "severity": {"Description": "Severity of the issue (e.g., warning, error)."},
+        "rule": {"Description": "Validation rule that triggered the issue."},
+    }
